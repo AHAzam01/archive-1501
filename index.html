@@ -225,11 +225,25 @@
         function changeBg(type, src) {
             bgVideo.style.opacity = 0;
             bgImg.style.opacity = 0;
+            
             setTimeout(() => {
                 if (type === 'video') {
                     bgVideo.src = src;
-                    bgVideo.play();
-                    bgVideo.style.opacity = 0.6;
+                    bgVideo.setAttribute("autoplay", ""); // Paksa autoplay
+                    bgVideo.setAttribute("muted", "");    // Harus muted agar autoplay jalan
+                    bgVideo.setAttribute("playsinline", ""); 
+                    bgVideo.load(); // Reload resource
+                    
+                    // Promise untuk memastikan video diputar
+                    const playPromise = bgVideo.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                            bgVideo.style.opacity = 0.6;
+                        }).catch(error => {
+                            console.log("Autoplay dicegah browser, mencoba lagi...");
+                            bgVideo.play();
+                        });
+                    }
                 } else {
                     bgImg.src = src;
                     bgImg.style.opacity = 0.6;
