@@ -10,12 +10,16 @@
     <style>
         body { font-family: 'Inter', sans-serif; background: #000; color: #fff; height: 100vh; overflow: hidden; margin: 0; }
         .serif { font-family: 'Playfair Display', serif; }
-        #bgVideoLoop { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.6; transition: opacity 1.5s ease; }
+        #bgVideoLoop { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.6; transition: opacity 1s ease-in-out; }
+        #bgImage { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0; transition: opacity 1s ease-in-out; }
         .full-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: #000; }
         .glass { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; }
         .btn-action { padding: 1rem 2rem; border-radius: 99px; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; font-size: 10px; letter-spacing: 3px; color: white; background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.3s ease; }
-        .btn-action:active { transform: scale(0.95); background: white; color: black; }
         
+        /* Primogems Counter */
+        #primo-display { position: fixed; top: 30px; left: 30px; z-index: 400; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); }
+        .primo-icon { color: #84cc16; font-size: 14px; }
+
         #main-menu-btn { position: fixed; top: 30px; right: 30px; z-index: 400; cursor: pointer; display: none; }
         #side-menu { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.98); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; }
 
@@ -25,10 +29,15 @@
 </head>
 <body>
 
+    <div id="primo-display" class="hidden">
+        <span class="primo-icon">✦</span>
+        <span id="primo-count" class="text-xs font-bold tracking-widest">0</span>
+    </div>
+
     <div id="admin-area" class="admin-controls hidden">
+        <button class="admin-btn" onclick="addPrimo(1000)">Admin: +1000 Primo</button>
         <button class="admin-btn" onclick="skipIntro()">Admin: Skip Intro</button>
         <button class="admin-btn !border-blue-500 !bg-blue-900/40" onclick="skipCountdown()">Admin: Skip Lock</button>
-        <button class="admin-btn !border-yellow-500 !bg-yellow-900/40" onclick="jumpTo(5)">Admin: Jump to Easter Egg</button>
     </div>
 
     <div id="main-menu-btn" onclick="toggleMenu()">
@@ -43,7 +52,6 @@
         <button onclick="jumpTo(2)" class="text-[10px] tracking-[0.4em] hover:text-white text-white/40 uppercase">01. Fragmen I</button>
         <button onclick="jumpTo(3)" class="text-[10px] tracking-[0.4em] hover:text-white text-white/40 uppercase">02. Fragmen II</button>
         <button onclick="jumpTo(4)" class="text-[10px] tracking-[0.4em] hover:text-white text-white/40 uppercase">03. Skyhill Archive</button>
-        <button onclick="jumpTo(5)" class="text-[10px] tracking-[0.4em] hover:text-white text-white/40 uppercase">04. Easter Egg</button>
     </div>
 
     <div id="step-loading" class="full-screen">
@@ -52,7 +60,7 @@
     </div>
 
     <div id="video-modal" class="full-screen hidden">
-        <div class="w-[85%] max-w-[380px] aspect-[9/16] bg-[#111] rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl">
+        <div class="w-[85%] max-w-[380px] aspect-[9/16] bg-[#111] rounded-[2rem] overflow-hidden border border-white/10">
             <video id="introVideo" playsinline style="width:100%; height:100%; object-fit:cover;">
                 <source src="video-intro.mp4" type="video/mp4">
             </video>
@@ -62,7 +70,8 @@
     </div>
 
     <div id="app" class="hidden w-full h-full relative z-10 flex flex-col items-center px-6 pt-24 overflow-y-auto">
-        <video id="bgVideoLoop" loop muted playsinline><source src="video-intro.mp4" type="video/mp4"></video>
+        <video id="bgVideoLoop" loop muted playsinline class="opacity-0"></video>
+        <img id="bgImage" src="" class="opacity-0">
 
         <div id="lock-screen" class="fixed inset-0 z-[150] bg-black flex flex-col items-center justify-center text-center px-10 hidden">
             <p class="serif italic text-lg mb-4 opacity-50">Menuju 15 Januari...</p>
@@ -72,9 +81,8 @@
         <div id="card-map" class="glass p-10 w-full max-w-sm text-center space-y-6">
             <p class="text-[9px] opacity-40 uppercase tracking-widest">Archive Map</p>
             <div class="w-full aspect-square bg-white/5 rounded-xl overflow-hidden border border-white/10">
-                <img src="map-image.png" alt="Map" class="w-full h-full object-cover opacity-60">
+                <img src="map.png" alt="Map" class="w-full h-full object-cover opacity-60">
             </div>
-            <p class="text-[10px] opacity-50 italic">"Semua perjalanan dimulai dari satu titik hening. Ikuti jejaknya."</p>
             <button onclick="jumpTo(2)" class="btn-action w-full">Mulai Fragmen I</button>
         </div>
 
@@ -83,7 +91,7 @@
             <h3 class="serif text-2xl italic">"Jiwa-jiwa Liar"</h3>
             <p class="text-[10px] opacity-50 italic">Anjing raksasa berbulu abu-abu yang setia. Siapa namanya?</p>
             <input type="text" id="pass-1" placeholder="ENTER CODE" class="w-full bg-transparent border-b border-white/20 py-3 text-center outline-none uppercase text-sm tracking-[0.3em]">
-            <button onclick="verify(1, 'SADAHARU')" class="btn-action w-full">Verifikasi</button>
+            <button onclick="verify(1, 'SADAHARU')" class="btn-action w-full">Verifikasi (+500 ✦)</button>
         </div>
 
         <div id="card-mission-2" class="glass p-10 w-full max-w-sm text-center space-y-6 hidden">
@@ -91,13 +99,12 @@
             <h3 class="serif text-2xl italic">"Penyucian Hening"</h3>
             <p class="text-[10px] opacity-50 italic">Kolam jernih bertingkat di dunia Teyvat?</p>
             <input type="text" id="pass-2" placeholder="L... P..." class="w-full bg-transparent border-b border-white/20 py-3 text-center outline-none uppercase text-sm tracking-[0.3em]">
-            <button onclick="verify(2, 'LUHUA POOL')" class="btn-action w-full">Verifikasi</button>
+            <button onclick="verify(2, 'LUHUA POOL')" class="btn-action w-full">Verifikasi (+500 ✦)</button>
         </div>
 
         <div id="card-deep-talk" class="glass p-10 w-full max-w-sm text-center space-y-4 hidden">
             <p class="text-[9px] opacity-40 uppercase tracking-widest">Skyhill Archive</p>
             <p id="q-text" class="text-[10px] italic min-h-[60px]">Apa momen paling tenang hari ini?</p>
-            <button onclick="showSecretMessage()" class="block w-full text-[7px] tracking-[0.5em] text-white/10 hover:text-white/40 italic py-2">[ Protocol 16.01 ]</button>
             <button id="btn-next-q" onclick="nextQuestion()" class="btn-action w-full">Kartu Berikutnya</button>
         </div>
 
@@ -108,21 +115,22 @@
                 <a href="video-easter-egg.mp4" download class="btn-action w-full !bg-yellow-500 !text-black font-bold text-center block">Download Video</a>
                 <a href="https://instagram.com/vault" target="_blank" class="btn-action w-full !border-yellow-500 !text-yellow-500 text-center block">Visit Instagram</a>
             </div>
-            <div id="waiting-area" class="text-[9px] opacity-30 tracking-widest italic leading-loose">Data terenkripsi. Terbuka 16 Januari.</div>
+            <div id="waiting-area" class="text-[9px] opacity-30 tracking-widest italic text-center leading-relaxed">
+                Fitur unduhan terbuka otomatis pada 16 Januari.
+            </div>
         </div>
-    </div>
-
-    <div id="modal-secret" class="full-screen hidden z-[300] bg-black/95 px-10 text-center">
-        <p class="text-[10px] tracking-widest opacity-60">Buka tab terakhir besok pada <span class="text-white font-bold">16 Januari 2026</span>.</p>
-        <button onclick="closeSecret()" class="mt-10 text-[8px] opacity-30 text-white">Tutup</button>
     </div>
 
     <script>
         const introVideo = document.getElementById('introVideo');
         const mainAudio = document.getElementById('mainAudio');
         const bgVideo = document.getElementById('bgVideoLoop');
+        const bgImg = document.getElementById('bgImage');
+        
         const targetDate = new Date("Jan 15, 2026 00:00:00").getTime();
         const eggDate = new Date("Jan 16, 2026 00:00:00").getTime();
+        
+        let primo = 0;
         let currentFragment = 1; 
         let qIdx = 0;
         const qs = ["Apa momen paling tenang hari ini?", "Satu kata untuk perjalanan kita?", "Terima kasih sudah ada di sini."];
@@ -130,6 +138,11 @@
         const urlParams = new URLSearchParams(window.location.search);
         const isAdmin = urlParams.get('mode') === 'admin';
         if (isAdmin) document.getElementById('admin-area').classList.remove('hidden');
+
+        function addPrimo(amount) {
+            primo += amount;
+            document.getElementById('primo-count').innerText = primo;
+        }
 
         document.getElementById('btn-open-arsip').onclick = () => {
             document.getElementById('step-loading').classList.add('hidden');
@@ -143,11 +156,12 @@
         };
 
         function skipIntro() {
+            introVideo.pause();
             document.getElementById('video-modal').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
+            document.getElementById('primo-display').classList.remove('hidden');
             document.getElementById('main-menu-btn').style.display = 'block';
-            mainAudio.play(); // Pastikan musik tetap jalan
-            bgVideo.play(); 
+            mainAudio.play();
             checkStatus();
         }
 
@@ -175,17 +189,38 @@
         function verify(id, code) {
             if (document.getElementById('pass-' + id).value.toUpperCase().trim() === code) {
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                addPrimo(500); // Beri 500 Primo
                 currentFragment = id + 2; 
                 displayFragment(currentFragment);
             } else { alert('Kode Salah'); }
         }
 
         function displayFragment(f) {
+            // SYARAT DEEP TALK (F=4)
+            if (f === 4 && primo < 1000 && !isAdmin) {
+                alert("✦ Primogems tidak cukup (Butuh 1000). Selesaikan fragmen sebelumnya!");
+                return;
+            }
+
+            // SYARAT EASTER EGG (F=5)
+            if (f === 5) {
+                if (primo >= 2000 || isAdmin) {
+                    if(!isAdmin) addPrimo(-2000); // Sedot 2000 Primo
+                } else {
+                    alert("✦ Butuh 2000 Primogems untuk membuka kenangan terakhir.");
+                    return;
+                }
+            }
+
             document.querySelectorAll('[id^="card-"]').forEach(el => el.classList.add('hidden'));
             const cards = ['card-map', 'card-mission-1', 'card-mission-2', 'card-deep-talk', 'card-easter-egg'];
             if(document.getElementById(cards[f-1])) document.getElementById(cards[f-1]).classList.remove('hidden');
-            const bgs = ['video-intro.mp4', 'video-intro.mp4', 'video-zoo.mp4', 'video-spa.mp4', 'video-spa.mp4'];
-            changeBg(bgs[f-1]);
+            
+            if (f === 1) changeBg('image', 'map.png');
+            else if (f === 2) changeBg('video', 'video-zoo.mp4');
+            else if (f === 3) changeBg('video', 'video-spa.mp4');
+            else if (f === 4 || f === 5) changeBg('video', 'video-dinner.mp4');
+
             if (f === 5 && (new Date().getTime() >= eggDate || isAdmin)) {
                 document.getElementById('download-area').classList.remove('hidden');
                 document.getElementById('waiting-area').classList.add('hidden');
@@ -193,21 +228,35 @@
             currentFragment = f;
         }
 
+        function changeBg(type, src) {
+            bgVideo.style.opacity = 0;
+            bgImg.style.opacity = 0;
+            setTimeout(() => {
+                if (type === 'video') {
+                    bgVideo.src = src;
+                    bgVideo.play();
+                    bgVideo.style.opacity = 0.6;
+                } else {
+                    bgImg.src = src;
+                    bgImg.style.opacity = 0.6;
+                }
+            }, 800);
+        }
+
         function nextQuestion() {
             qIdx++;
-            if (qIdx < qs.length) { document.getElementById('q-text').innerText = qs[qIdx]; }
-            else {
-                document.getElementById('btn-next-q').innerText = "Buka Enkripsi Terakhir";
+            if (qIdx < qs.length) { 
+                document.getElementById('q-text').innerText = qs[qIdx]; 
+            } else {
+                addPrimo(1000); // Bonus dari Deep Talk
+                document.getElementById('btn-next-q').innerText = "Unlock Easter Egg (2000 ✦)";
                 document.getElementById('btn-next-q').onclick = () => displayFragment(5);
             }
         }
 
-        function changeBg(src) { bgVideo.style.opacity = 0; setTimeout(() => { bgVideo.src = src; bgVideo.play(); bgVideo.style.opacity = 0.6; }, 1000); }
         function toggleMenu() { const m = document.getElementById('side-menu'); m.style.display = (m.style.display === 'flex' ? 'none' : 'flex'); }
         function jumpTo(f) { displayFragment(f); toggleMenu(); }
         function skipCountdown() { document.getElementById('lock-screen').style.display = 'none'; displayFragment(1); }
-        function showSecretMessage() { document.getElementById('modal-secret').classList.remove('hidden'); }
-        function closeSecret() { document.getElementById('modal-secret').classList.add('hidden'); }
         window.onload = () => { if(isAdmin) checkStatus(); };
     </script>
 </body>
