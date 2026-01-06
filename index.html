@@ -16,13 +16,9 @@
         .glass { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; }
         .btn-action { padding: 1rem 2rem; border-radius: 99px; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; font-size: 10px; letter-spacing: 3px; color: white; background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.3s ease; }
         
-        /* Primogems Counter */
         #primo-display { position: fixed; top: 30px; left: 30px; z-index: 400; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); }
-        .primo-icon { color: #84cc16; font-size: 14px; }
-
         #main-menu-btn { position: fixed; top: 30px; right: 30px; z-index: 400; cursor: pointer; display: none; }
         #side-menu { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.98); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; }
-
         .admin-controls { position: fixed; bottom: 20px; right: 20px; z-index: 600; display: flex; flex-direction: column; gap: 8px; }
         .admin-btn { background: rgba(127, 29, 29, 0.6); border: 1px solid #ef4444; color: white; font-size: 7px; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; cursor: pointer; }
     </style>
@@ -30,12 +26,12 @@
 <body>
 
     <div id="primo-display" class="hidden">
-        <span class="primo-icon">✦</span>
+        <span style="color: #84cc16;">✦</span>
         <span id="primo-count" class="text-xs font-bold tracking-widest">0</span>
     </div>
 
     <div id="admin-area" class="admin-controls hidden">
-        <button class="admin-btn" onclick="addPrimo(1000)">Admin: +1000 Primo</button>
+        <button class="admin-btn" onclick="addPrimo(2000)">Admin: +2000 Primo</button>
         <button class="admin-btn" onclick="skipIntro()">Admin: Skip Intro</button>
         <button class="admin-btn !border-blue-500 !bg-blue-900/40" onclick="skipCountdown()">Admin: Skip Lock</button>
     </div>
@@ -115,9 +111,7 @@
                 <a href="video-easter-egg.mp4" download class="btn-action w-full !bg-yellow-500 !text-black font-bold text-center block">Download Video</a>
                 <a href="https://instagram.com/vault" target="_blank" class="btn-action w-full !border-yellow-500 !text-yellow-500 text-center block">Visit Instagram</a>
             </div>
-            <div id="waiting-area" class="text-[9px] opacity-30 tracking-widest italic text-center leading-relaxed">
-                Fitur unduhan terbuka otomatis pada 16 Januari.
-            </div>
+            <div id="waiting-area" class="text-[9px] opacity-30 tracking-widest italic text-center leading-relaxed">Fitur unduhan terbuka otomatis pada 16 Januari.</div>
         </div>
     </div>
 
@@ -151,12 +145,15 @@
 
         document.getElementById('btn-play-trigger').onclick = function() {
             this.style.display = 'none';
-            introVideo.play(); mainAudio.play();
+            introVideo.play(); 
+            mainAudio.play();
+            // EVENT: Saat video selesai, langsung skip intro
             introVideo.onended = () => skipIntro();
         };
 
         function skipIntro() {
-            introVideo.pause();
+            introVideo.pause(); 
+            introVideo.currentTime = 0; 
             document.getElementById('video-modal').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('primo-display').classList.remove('hidden');
@@ -189,25 +186,22 @@
         function verify(id, code) {
             if (document.getElementById('pass-' + id).value.toUpperCase().trim() === code) {
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                addPrimo(500); // Beri 500 Primo
+                addPrimo(500);
                 currentFragment = id + 2; 
                 displayFragment(currentFragment);
             } else { alert('Kode Salah'); }
         }
 
         function displayFragment(f) {
-            // SYARAT DEEP TALK (F=4)
             if (f === 4 && primo < 1000 && !isAdmin) {
-                alert("✦ Primogems tidak cukup (Butuh 1000). Selesaikan fragmen sebelumnya!");
+                alert("✦ Primogems tidak cukup (Butuh 1000).");
                 return;
             }
-
-            // SYARAT EASTER EGG (F=5)
             if (f === 5) {
                 if (primo >= 2000 || isAdmin) {
-                    if(!isAdmin) addPrimo(-2000); // Sedot 2000 Primo
+                    if(!isAdmin) addPrimo(-2000);
                 } else {
-                    alert("✦ Butuh 2000 Primogems untuk membuka kenangan terakhir.");
+                    alert("✦ Butuh 2000 Primogems.");
                     return;
                 }
             }
@@ -248,7 +242,7 @@
             if (qIdx < qs.length) { 
                 document.getElementById('q-text').innerText = qs[qIdx]; 
             } else {
-                addPrimo(1000); // Bonus dari Deep Talk
+                addPrimo(1000); 
                 document.getElementById('btn-next-q').innerText = "Unlock Easter Egg (2000 ✦)";
                 document.getElementById('btn-next-q').onclick = () => displayFragment(5);
             }
